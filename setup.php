@@ -9,7 +9,7 @@ function plugin_version_stockcontrol() {
                  'requirements'   => [
                                         'glpi'   => [
                                              'min' => '9.1',
-                                             'max' => '9.4.3'
+                                             'max' => '11.1'
                                         ]
                                      ]);
 }
@@ -22,7 +22,7 @@ function plugin_stockcontrol_check_config($verbose = false) {
        
 function plugin_stockcontrol_check_prerequisites() {
     // Check that the GLPI version is compatible
-    if (version_compare(GLPI_VERSION, '9.4.2', 'lt') || version_compare(GLPI_VERSION, '9.4.2', 'gt')) {
+    if (version_compare(GLPI_VERSION, '11.0.0-dev', 'lt') || version_compare(GLPI_VERSION, '11.0.0-dev', 'gt')) {
         echo "This plugin Requires GLPI version 9.4.2";
         return false;
     }
