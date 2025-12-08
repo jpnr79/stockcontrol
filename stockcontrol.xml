@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <name>Stock Control</name>
+    <key>stockcontrol</key>
+    <state>stable</state>
+    <logo>https://raw.githubusercontent.com/glpi-project/glpi/main/pics/logo-glpi-flat.png</logo>
+    <description>
+        <short>
+            <en>A plugin to manage item stock levels.</en>
+            <fr>Un plugin pour gérer les niveaux de stock des articles.</fr>
+        </short>
+        <long>
+            <en>This plugin provides features to control and manage stock for various items within GLPI.</en>
+            <fr>Ce plugin fournit des fonctionnalités pour contrôler et gérer le stock de divers articles dans GLPI.</fr>
+        </long>
+    </description>
+    <homepage>https://github.com/your-repo/stockcontrol</homepage>
+    <authors>
+        <author>Your Name</author>
+    </authors>
+    <versions>
+        <version>
+            <num>1.0.0</num>
+            <compatibility>~11.0</compatibility>
+        </version>
+    </versions>
+    <langs>
+        <lang>en_GB</lang>
+        <lang>fr_FR</lang>
+    </langs>
+    <license>GPLv3+</license>
+</root>
