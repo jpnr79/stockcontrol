@@ -1,94 +1,54 @@
 <?php
-class PluginStockcontrolMenu extends CommonGLPI {
-   static $rightname = 'plugin_stockcontrol';
+declare(strict_types=1);
 
-   static function getMenuName() {
-      return 'Stock Control System';
+namespace GlpiPlugin\Stockcontrol;
+
+use \CommonDBTM;
+use \Plugin;
+use \Html;
+use \Session;
+use \Dropdown;
+use \Request;
+
+class PluginStockcontrolMenu extends \CommonGLPI {
+   public static string $rightname = 'plugin_stockcontrol';
+
+   public static function getMenuName(): string {
+      return __('Stock Control System', 'stockcontrol');
    }
 
-   static function getMenuContent() {
-
-      $menu                    = [];
-      $menu['title']           = self::getMenuName();
-      $menu['page']            = "/plugins/stockcontrol/front/stockcontrol.php";
+   public static function getMenuContent(): array {
+      $menu = [];
+      $menu['title'] = self::getMenuName();
+      $menu['page'] = "/plugins/stockcontrol/front/stockcontrol.php";
       $menu['links']['search'] = "/plugins/stockcontrol/front/stockcontrol.php";
-
       return $menu;
    }
 
-   /**
-    *
-    * /
-   static function removeRightsFromSession() {
+   public static function removeRightsFromSession(): void {
       if (isset($_SESSION['glpimenu']['tools']['types']['PluginStockcontrolMenu'])) {
          unset($_SESSION['glpimenu']['tools']['types']['PluginStockcontrolMenu']);
       }
-      if (isset($_SESSION['glpimenu']['tools']['content']['pluginStockcontrolgmenu'])) {
-         unset($_SESSION['glpimenu']['tools']['content']['pluginStockincontrolmenu']);
+      if (isset($_SESSION['glpimenu']['tools']['content']['pluginStockcontrolmenu'])) {
+         unset($_SESSION['glpimenu']['tools']['content']['pluginStockcontrolmenu']);
       }
    }
 
    /**
     * @param CommonGLPI $item
     * @param int        $withtemplate
-    *
     * @return array|string
-    * /
-   function getTabNameForItem(CommonGLPI $item, $withtemplate = 0) {
-      global $CFG_GLPI;
-
+    */
+   public static function getTabNameForItem(\CommonGLPI $item, int $withtemplate = 0): array|string {
       switch ($item->getType()) {
-         case __CLASS__ :
-            $dbu = new DbUtils();
-            $ocsServers = $dbu->getAllDataFromTable('glpi_plugin_ocsinventoryng_ocsservers',
-                                               ["is_active" => 1]);
-            if (!empty($ocsServers)) {
-
-               $ong[0] = __('Server Setup', 'ocsinventoryng');
-
-               $ong[1] = __('Inventory Import', 'ocsinventoryng');
-
-               $ong[2] = __('IPDiscover Import', 'ocsinventoryng');
-
-               //if (isset($_POST["plugin_ocsinventoryng_ocsservers_id"])) {
-               //   $_SESSION["plugin_ocsinventoryng_ocsservers_id"] = $_POST["plugin_ocsinventoryng_ocsservers_id"];
-               //} else {
-               //   $_SESSION["plugin_ocsinventoryng_ocsservers_id"] = PluginOcsinventoryngOcsServer::getFirstServer();
-               //}
-
-               if (isset($_SESSION["plugin_ocsinventoryng_ocsservers_id"])
-                   && $_SESSION["plugin_ocsinventoryng_ocsservers_id"] > 0) {
-                  if (PluginOcsinventoryngOcsServer::checkOCSconnection($_SESSION["plugin_ocsinventoryng_ocsservers_id"])) {
-
-                     $ocsClient = new PluginOcsinventoryngOcsServer();
-                     $client    = $ocsClient->getDBocs($_SESSION["plugin_ocsinventoryng_ocsservers_id"]);
-                     $version   = $client->getTextConfig('GUI_VERSION');
-                     $snmp      = $client->getIntConfig('SNMP');
-                     if ($version > $ocsClient::OCS2_1_VERSION_LIMIT && $snmp) {
-                        $ong[3] = __('SNMP Import', 'ocsinventoryng');
-                     }
-                  }
-               }
-            } else {
-               $ong = [];
-               echo "<div align='center'>";
-               echo "<i class='fas fa-exclamation-triangle fa-4x' style='color:orange'></i>";
-               echo "<br>";
-               echo "<div class='red b'>";
-               echo __('No OCSNG server defined', 'ocsinventoryng');
-               echo "<br>";
-               echo __('You must to configure a OCSNG server', 'ocsinventoryng');
-               echo " : <a href='" . $CFG_GLPI["root_doc"] . "/plugins/ocsinventoryng/front/ocsserver.form.php'>";
-               echo __('Add a OCSNG server', 'ocsinventoryng');
-               echo "</a>";
-               echo "</div></div>";
-            }
-            return $ong;
-
-         default :
-            return '';
+         case __CLASS__:
+            return [__('Server Setup', 'stockcontrol'), __('Inventory Import', 'stockcontrol')];
+         default:
+            return parent::getTabNameForItem($item, $withtemplate);
       }
    }
+
+            // ...existing code...
 
    /**
     * @param CommonGLPI $item

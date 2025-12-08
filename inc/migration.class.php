@@ -1,4 +1,15 @@
 <?php
+declare(strict_types=1);
+
+namespace GlpiPlugin\Stockcontrol;
+
+use \CommonDBTM;
+use \Plugin;
+use \Html;
+use \Session;
+use \Dropdown;
+use \Request;
+
 
 if (!defined('GLPI_ROOT')) {
     die('Sorry. You can\'t access this file directly');

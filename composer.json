@@ -1,0 +1,13 @@
+{
+    "name": "glpi/stockcontrol",
+    "type": "glpi-plugin",
+    "require": {
+        "php": ">=8.2",
+        "glpi/glpi": ">=11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "GlpiPlugin\\Stockcontrol\\": "inc/"
+        }
+    }
+}

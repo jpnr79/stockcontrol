@@ -1,16 +1,8 @@
 <?php
 
+
 use Glpi\Toolbox\PluginMigration;
 
-/**
- * Plugin install process
- *
- * @return boolean
- */
-function plugin_init_stockcontrol() {
-   // No specific hook registration needed for now, but the function should exist.
-   return true;
-}
 
 /**
  * Install hook
@@ -44,17 +36,3 @@ function plugin_stockcontrol_uninstall()
    return true;
 }
 
-/**
- * Get the plugin version.
- *
- * @return array
- */
-function plugin_version_stockcontrol()
-{
-    return [
-        'version'      => '1.0.0',
-        'requirements' => [
-            'glpi' => ['min' => '11.0', 'max' => '12.0'],
-        ],
-    ];
-}

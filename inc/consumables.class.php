@@ -1,55 +1,59 @@
 <?php
+declare(strict_types=1);
 
-class consumables {
+namespace GlpiPlugin\Stockcontrol;
+
+use \CommonDBTM;
+use \Plugin;
+use \Html;
+use \Session;
+use \Dropdown;
+use \Request;
+
+
+
+class PluginStockcontrolConsumables extends \CommonDBTM {
     private $fromDate;
     private $toDate;
-    private $consumables = array();
-    private $markupPercent = 5;
+    private array $consumables = [];
+    private int $markupPercent = 5;
 
-    function __construct( $id = null  ) {
-        if ( $id <> NULL ) {
-            $SQL = "SELECT * from `glpi_consumableitems` WHERE `id` = " . $db->real_escape_string($id) ." LIMIT 1";
-            $res = $db-Aquery( $SQL );
-            if ($res ->num_rows ==1 ) {
-                $item=$res->fetch_assoc();
-                var_dump($item);
-                die();
+    public function __construct(?int $id = null) {
+        global $DB;
+        parent::__construct();
+        if ($id !== null) {
+            $SQL = "SELECT * FROM `glpi_consumableitems` WHERE `id` = '" . $DB->escape($id) . "' LIMIT 1";
+            $res = $DB->query($SQL);
+            if ($res && $DB->numrows($res) === 1) {
+                $item = $DB->fetch_assoc($res);
+                // Handle $item as needed
             }
         }
     }
 
-
-    function __destruct() {
+    public function __destruct() {
+        parent::__destruct();
     }
 
 
-    function getIssueToDate() {
+    public function getIssueToDate(): ?string {
         return $this->toDate;
     }
 
-    function getIssueFromDate() {
+    public function getIssueFromDate(): ?string {
         return $this->fromDate;
     }
 
-    function getConsumableIssues($fromDate=null, $toDate = null) {
-        global $logger,$tickets,$parts,$db;
-        
-        if ($fromDate == null ) {
-            if (! isset($_REQUEST['issueFrom']) ) {
-                $this->fromDate = getFirstDayOfMonth(date('Y-m-d' ));   /* getFirstDayOfMonth is a function in datefunctions.inc.php */
-            } else {
-                $this->fromDate = $_REQUEST['issueFrom'];
-            }
+    public function getConsumableIssues(?string $fromDate = null, ?string $toDate = null): array {
+        global $DB;
+        if ($fromDate === null) {
+            $this->fromDate = $_REQUEST['issueFrom'] ?? getFirstDayOfMonth(date('Y-m-d'));
         } else {
             $this->fromDate = $fromDate;
         }
 
-        if ($toDate == null) {
-            if (! isset($_REQUEST['issueTo']) ) {
-                $this->toDate = getLastDayOfMonth(date('Y-m-d'));  /* getLastDayOfMonth is a function in datefunctions.inc.php */
-            } else {
-                $this->toDate = $_REQUEST['issueTo'];
-            }
+        if ($toDate === null) {
+            $this->toDate = $_REQUEST['issueTo'] ?? getLastDayOfMonth(date('Y-m-d'));
         } else {
             $this->toDate = $toDate;
         }

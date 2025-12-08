@@ -18,6 +18,10 @@
     <authors>
         <author>Your Name</author>
     </authors>
+    <compatibility>
+        <min>11.0</min>
+        <max>11.99</max>
+    </compatibility>
     <versions>
         <version>
             <num>1.0.0</num>
