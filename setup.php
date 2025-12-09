@@ -2,13 +2,13 @@
 declare(strict_types=1);
 
 function plugin_init_stockcontrol() {
-    // Registra classes (usando FQCN)
-    Plugin::registerClass('GlpiPlugin\\Stockcontrol\\PluginStockcontrolStock', ['addtabon' => ['ConsumableItem','Computer']]);
+    // Register plugin classes with GLPI
+    Plugin::registerClass('GlpiPlugin\\Stockcontrol\\PluginStockcontrolStock', [
+        'addtabon' => ['ConsumableItem', 'Computer']
+    ]);
     Plugin::registerClass('GlpiPlugin\\Stockcontrol\\PluginStockcontrolConsumables');
     Plugin::registerClass('GlpiPlugin\\Stockcontrol\\PluginStockcontrolMenu');
-    // ...existing code...
 }
-// ...existing code...
 
 function plugin_version_stockcontrol() {
     return [
@@ -30,7 +30,7 @@ function plugin_version_stockcontrol() {
 }
 
 function plugin_stockcontrol_check_prerequisites() {
-    // Verifique se a versão do GLPI é compatível
+    // Check GLPI version compatibility
     if (version_compare(GLPI_VERSION, '11.0.0', '<')) {
         echo "This plugin requires GLPI >= 11.0.0";
         return false;
@@ -41,6 +41,7 @@ function plugin_stockcontrol_check_prerequisites() {
     }
     return true;
 }
+
 function plugin_stockcontrol_check_config() {
     return true;
 }

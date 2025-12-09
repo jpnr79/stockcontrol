@@ -22,10 +22,13 @@ class PluginStockcontrolConsumables extends \CommonDBTM {
         global $DB;
         parent::__construct();
         if ($id !== null) {
-            $SQL = "SELECT * FROM `glpi_consumableitems` WHERE `id` = '" . $DB->escape($id) . "' LIMIT 1";
-            $res = $DB->query($SQL);
-            if ($res && $DB->numrows($res) === 1) {
-                $item = $DB->fetch_assoc($res);
+            $result = $DB->request([
+                'FROM' => 'glpi_consumableitems',
+                'WHERE' => ['id' => $id],
+                'LIMIT' => 1
+            ]);
+            if ($result->count() > 0) {
+                $item = $result->current();
                 // Handle $item as needed
             }
         }
@@ -47,80 +50,111 @@ class PluginStockcontrolConsumables extends \CommonDBTM {
     public function getConsumableIssues(?string $fromDate = null, ?string $toDate = null): array {
         global $DB;
         if ($fromDate === null) {
-            $this->fromDate = $_REQUEST['issueFrom'] ?? getFirstDayOfMonth(date('Y-m-d'));
+            $this->fromDate = isset($_REQUEST['issueFrom']) ? $_REQUEST['issueFrom'] : getFirstDayOfMonth(date('Y-m-d'));
         } else {
             $this->fromDate = $fromDate;
         }
 
         if ($toDate === null) {
-            $this->toDate = $_REQUEST['issueTo'] ?? getLastDayOfMonth(date('Y-m-d'));
+            $this->toDate = isset($_REQUEST['issueTo']) ? $_REQUEST['issueTo'] : getLastDayOfMonth(date('Y-m-d'));
         } else {
             $this->toDate = $toDate;
         }
 
         if ($toDate < $fromDate) {
            $toDate = getLastDayOfMonth($fromDate);    /* getLastDayOfMonth is a function in datefunctions.inc.php */
-           }
+        }
 
+        $result = $DB->request([
+            'SELECT' => [
+                'glpi_consumableitemtypes.name' => 'consumableitemtypesName',
+                'glpi_consumableitemtypes.id' => 'itemTypeId',
+                'glpi_consumableitems.name' => 'consumableitemsName',
+                'glpi_consumableitems.alarm_threshold',
+                new \QueryExpression('count(*) as currentStock'),
+                'glpi_consumableitems.id' => 'consumableitemsId',
+                'glpi_consumableitemtypes.id' => 'consumableitemtypesId',
+                'glpi_consumableitemtypes.comment' => 'consumableitemtypesComment',
+                'glpi_consumableitems.ref' => 'consumableitemsRef',
+                'glpi_consumableitems.locations_id',
+                'glpi_consumableitems.manufacturers_id',
+                'glpi_consumableitems.comment' => 'consumableitemsComment',
+                'glpi_consumables.id' => 'consumablesId',
+                'glpi_consumables.date_in',
+                'glpi_consumables.date_out',
+                'glpi_consumables.itemtype',
+                'glpi_locations.completename',
+                'glpi_infocoms.order_number',
+                'glpi_infocoms.bill',
+                'glpi_infocoms.value',
+                'glpi_infocoms.immo_number',
+                'glpi_budgets.comment' => 'teamCode',
+                'glpi_infocoms.comment'
+            ],
+            'FROM' => 'glpi_consumables',
+            'LEFT JOIN' => [
+                'glpi_consumableitems' => [
+                    'ON' => [
+                        'glpi_consumables' => 'consumableitems_id',
+                        'glpi_consumableitems' => 'id'
+                    ]
+                ],
+                'glpi_consumableitemtypes' => [
+                    'ON' => [
+                        'glpi_consumableitems' => 'consumableitemtypes_id',
+                        'glpi_consumableitemtypes' => 'id'
+                    ]
+                ],
+                'glpi_infocoms' => [
+                    'ON' => [
+                        new \QueryExpression('glpi_infocoms.items_id = glpi_consumables.id AND glpi_infocoms.itemtype = "consumable"')
+                    ]
+                ],
+                'glpi_locations' => [
+                    'ON' => [
+                        'glpi_locations' => 'id',
+                        'glpi_consumableitems' => 'locations_id'
+                    ]
+                ],
+                'glpi_users' => [
+                    'ON' => [
+                        new \QueryExpression('glpi_consumables.items_id = glpi_users.id AND glpi_consumables.itemtype = "user"')
+                    ]
+                ],
+                'glpi_groups' => [
+                    'ON' => [
+                        new \QueryExpression('glpi_consumables.items_id = glpi_groups.id AND glpi_consumables.itemtype = "group"')
+                    ]
+                ],
+                'glpi_budgets' => [
+                    'ON' => [
+                        'glpi_budgets' => 'id',
+                        'glpi_infocoms' => 'budgets_id'
+                    ]
+                ]
+            ],
+            'WHERE' => [
+                'glpi_consumableitems.is_deleted' => 0,
+                new \QueryExpression('DATE(glpi_consumables.date_out) >= "' . $DB->escape($this->fromDate) . '"'),
+                new \QueryExpression('DATE(glpi_consumables.date_out) <= "' . $DB->escape($this->toDate) . '"'),
+                ['!=', 'glpi_consumableitems.alarm_threshold', 0]
+            ],
+            'GROUP BY' => 'glpi_consumables.id',
+            'ORDER' => ['glpi_locations.completename', 'glpi_consumableitemtypes.name', 'glpi_consumableitems.name']
+        ]);
 
-        $SQL = "SELECT `glpi_consumableitemtypes`.`name` as `consumableitemtypesName`, 
-                       `glpi_consumableitemtypes`.`id` as `itemTypeId`, 
-                       `glpi_consumableitems`.`name` as `consumableitemsName`, 
-                       `glpi_consumableitems`.`alarm_threshold`, 
-                        count(*) as `currentStock` , 
-                       `glpi_consumableitems`.`id` as `consumableitemsId`, 
-                       `glpi_consumableitemtypes`.`id` as `consumableitemtypesId`, 
-                       `glpi_consumableitemtypes`.`comment` as `consumableitemtypesComment`, 
-                       `glpi_consumableitems`.`ref` as `consumableitemsRef`, 
-                       `glpi_consumableitems`.`locations_id`, 
-                       `glpi_consumableitems`.`manufacturers_id`, 
-                       `glpi_consumableitems`.`comment` as `consumableitemsComment`, 
-                       `glpi_consumables`.`id` as `consumablesId`, 
-                       `glpi_consumables`.`date_in`, 
-                       `glpi_consumables`.`date_out`, 
-                       `glpi_consumables`.`itemtype`, 
-                       `glpi_locations`.`completename`, 
-                       `glpi_infocoms`.`order_number`, 
-                       `glpi_infocoms`.`bill`, 
-                       `glpi_infocoms`.`value`,
-                       `glpi_infocoms`.`immo_number`,
-                        COALESCE (
-                                CONCAT('[user] ', `glpi_users`.`firstname`,' ',`glpi_users`.`realname`),
-                               CONCAT('[Group] ',`glpi_groups`.`name`)
-                        )  as `issuedTo`,
-                       `glpi_budgets`.`comment` as `teamCode`,
-                       `glpi_infocoms`.`comment`
-                  FROM `glpi_consumables` 
-             LEFT JOIN `glpi_consumableitems` ON (`glpi_consumables`.`consumableitems_id` = `glpi_consumableitems`.`id`) 
-             LEFT JOIN `glpi_consumableitemtypes` ON (`glpi_consumableitems`.`consumableitemtypes_id` = `glpi_consumableitemtypes`.`id`) 
-             LEFT JOIN `glpi_infocoms` ON ( `glpi_infocoms`.`items_id` = `glpi_consumables`.`id` AND `glpi_infocoms`.`itemtype` = 'consumable') 
-             LEFT JOIN `glpi_locations` ON (`glpi_locations`.`id` = `glpi_consumableitems`.`locations_id`) 
-             LEFT JOIN `glpi_users` ON (`glpi_consumables`.`items_id` = `glpi_users`.`id` AND `glpi_consumables`.`itemtype` = 'user')
-             LEFT JOIN `glpi_groups` ON (`glpi_consumables`.`items_id` = `glpi_groups`.`id` AND `glpi_consumables`.`itemtype` = 'group')
-             LEFT JOIN `glpi_budgets` ON (`glpi_budgets`.`id` = `glpi_infocoms`.`budgets_id`)
-                 WHERE `glpi_consumableitems`.`is_deleted` = 0 
-                   AND DATE(`glpi_consumables`.`date_out`) >= '" . $db->real_escape_string($this->fromDate) . "' 
-                   AND DATE(`glpi_consumables`.`date_out`) <= '" . $db->real_escape_string($this->toDate)   . "' 
-                   AND `glpi_consumableitems`.`alarm_threshold` <> 0 
-              GROUP BY `glpi_consumables`.`id` 
-              ORDER BY `glpi_locations`.`completename`,  
-                       `glpi_consumableitemtypes`.`name`, 
-                       `glpi_consumableitems`.`name` ";
-
-#print "<pre>$SQL</pre>";
         try {
-            $result = $db->query($SQL);
-            while ( $consumable = $result->fetch_assoc() ) {
+            foreach ($result as $consumable) {
                 $this->consumables[$consumable['consumablesId']] = $consumable;
-                $this->consumables[$consumable['consumablesId']]['chargeOut']= round($consumable['value'] * (1 + ($this->markupPercent/100)),2) ;
-                $this->consumables[$consumable['consumablesId']]['profit']=  $this->consumables[$consumable['consumablesId']]['chargeOut'] - $consumable['value'];
+                $this->consumables[$consumable['consumablesId']]['chargeOut'] = round($consumable['value'] * (1 + ($this->markupPercent/100)), 2);
+                $this->consumables[$consumable['consumablesId']]['profit'] = $this->consumables[$consumable['consumablesId']]['chargeOut'] - $consumable['value'];
             }
         } catch (Exception $e) {
             die($e);
-            return FALSE;
-        } finally {
-            if ( isset($result) && gettype($result)=='object' && get_class($result) == 'mysqli_result') $result->close();
+            return false;
         }
+        
+        return $this->consumables;
     }
 
 
@@ -223,27 +257,37 @@ class PluginStockcontrolConsumables extends \CommonDBTM {
    /*
     * list all consumable Items in a select
     */
-   function selectAllConsumableItems($selectedItem=0) {
-       GLOBAL $db;
-       $SQL = "select `glpi_consumableitems`.`id`, 
-                       CONCAT(`glpi_consumableitemtypes`.`name`, ' -> ' ,`glpi_consumableitems`.`name`) as `name`
-                 from `glpi_consumableitems`
-            LEFT JOIN `glpi_consumableitemtypes` ON (`glpi_consumableitemtypes`.`id` = `glpi_consumableitems`.`consumableitemtypes_id`)
-             order by `glpi_consumableitemtypes`.`name`, `glpi_consumableitems`.`name`";
+   function selectAllConsumableItems($selectedItem = 0) {
+       global $DB;
+       $result = $DB->request([
+           'SELECT' => [
+               'glpi_consumableitems.id',
+               new \QueryExpression("CONCAT(glpi_consumableitemtypes.name, ' -> ', glpi_consumableitems.name) as name")
+           ],
+           'FROM' => 'glpi_consumableitems',
+           'LEFT JOIN' => [
+               'glpi_consumableitemtypes' => [
+                   'ON' => [
+                       'glpi_consumableitemtypes' => 'id',
+                       'glpi_consumableitems' => 'consumableitemtypes_id'
+                   ]
+               ]
+           ],
+           'ORDER' => ['glpi_consumableitemtypes.name', 'glpi_consumableitems.name']
+       ]);
 
        $retVal = "<select name=\"consumableItemsId\">";
        try {
-           $result = $db->query($SQL);
-           while ( $consumable = $result->fetch_assoc() ) {
-               $retVal .= "<option value=\"" . $consumable['id'] . "\"";
-               if ($consumable['id'] == $selectedItem) $retVal .= " SELECTED=\"SELECTED\" ";
+           foreach ($result as $consumable) {
+               $retVal .= "<option value=\"" . htmlspecialchars($consumable['id']) . "\"";
+               if ($consumable['id'] == $selectedItem) {
+                   $retVal .= " SELECTED=\"SELECTED\" ";
+               }
                $retVal .= ">" . htmlentities($consumable['name']) . "</option>";
            }
        } catch (Exception $e) {
            die($e);
-           return FALSE;
-       } finally {
-           if ( isset($result) && gettype($result)=='object' && get_class($result) == 'mysqli_result') $result->close();
+           return false;
        }
        return $retVal . "</select>";
    }
@@ -252,25 +296,23 @@ class PluginStockcontrolConsumables extends \CommonDBTM {
    /*
     * list all suppliers Items in a select
     */
-   function selectAllSuppliers($selectedItem=0) {
-       GLOBAL $db;
-       $SQL = "select `id`,`name` 
-                 from `glpi_suppliers`
-                WHERE `is_deleted` = 0
-             order by `name`";
+   function selectAllSuppliers($selectedItem = 0) {
+       global $DB;
+       $result = $DB->request([
+           'SELECT' => ['id', 'name'],
+           'FROM' => 'glpi_suppliers',
+           'WHERE' => ['is_deleted' => 0],
+           'ORDER' => ['name']
+       ]);
 
        $retval = "<select name=\"supplierId\">";
        try {
-
-           $result = $db->query($SQL);
-           while ( $consumable = $result->fetch_assoc() ) {
-               $retval .= "<option value=\"" . $consumable['id'] . "\">" . htmlentities($consumable['name']) . "</option>";
+           foreach ($result as $consumable) {
+               $retval .= "<option value=\"" . htmlspecialchars($consumable['id']) . "\">" . htmlentities($consumable['name']) . "</option>";
            }
        } catch (Exception $e) {
            die($e);
-           return FALSE;
-       } finally {
-           if ( isset($result) && gettype($result)=='object' && get_class($result) == 'mysqli_result') $result->close();
+           return false;
        }
        return $retval . "</select>";
    }
@@ -281,16 +323,19 @@ class PluginStockcontrolConsumables extends \CommonDBTM {
 
 
    function printReceiptForm() {
+       $consumableItemId = isset($_REQUEST['consumableItemisId']) ? $_REQUEST['consumableItemisId'] : 0;
+       $supplierId = isset($_REQUEST['supplierId']) ? $_REQUEST['supplierId'] : 0;
+       
        print "
          <form>
            <table>
              <tr>
                <td>Item</td>
-               <td>" . $this->selectAllConsumableItems($_REQUEST['consumableItemisId']) . "</td>
+               <td>" . $this->selectAllConsumableItems($consumableItemId) . "</td>
              </tr>
              <tr>
                <td>Supplier</td>
-               <td>" . $this->selectAllSuppliers($_REQUEST['supplierId']) . "</td>
+               <td>" . $this->selectAllSuppliers($supplierId) . "</td>
              </tr>
              <tr>
                <td>Quantity</td>
@@ -338,35 +383,35 @@ class PluginStockcontrolConsumables extends \CommonDBTM {
     *                   unitPrice
     *                ]
     */
-   function insertConsumables($quantity,$data) {
-      GLOBAL $db, $logger;
+   function insertConsumables($quantity, $data) {
+      global $DB;
       for ($x = 1; $x <= $quantity; $x++) {
          /*
           * Let's insert the consumable itself
           */
-         $SQL1 = sprintf("INSERT INTO `glpi_consumables` VALUES (NULL,0,%d,'%s',NULL,NULL,0,NOW(),NOW())",
-                         $data['consumableItemsId'],
-                         $db->real_escape_string($data['deliveryDate']));
-         $db->query($SQL1);
-         $insertId =  $db->insert_id;
-         $logger->log(__FILE__,__LINE__, SOURCE_SYSTEM,'New reord ID is '.$insertId,'inserted the ' . $x . ' Consumable item',$SQL1);
-
+         $DB->insert('glpi_consumables', [
+             'consumableitems_id' => (int)$data['consumableItemsId'],
+             'date_in' => $data['deliveryDate'],
+             'date_creation' => date('Y-m-d H:i:s'),
+             'date_mod' => date('Y-m-d H:i:s')
+         ]);
+         
+         $insertId = $DB->getLastInsertId();
 
          /*
           * now let's insert the infocoms data,
-          * using the ID created by the previous nsert statement
+          * using the ID created by the previous insert statement
           */
-         $SQL2 = sprintf("INSERT INTO `glpi_infocoms` (`items_id`,`itemtype`, `buy_date`,`suppliers_id`,`order_number`,`value`,`order_date`,`delivery_date`)
-                               VALUES (%d,'Consumable','%s',%d,'%s',%.2f,'%s','%s')",
-                         $insertId,
-                         $data['orderDate'],
-                         $data['supplierId'],
-                         strtoupper($data['orderNumber']),
-                         $data['unitPrice'],
-                         $data['orderDate'],
-                         $data['deliveryDate']);
-         $db->query($SQL2);
-         $logger->log(__FILE__,__LINE__, SOURCE_SYSTEM,'New reord ID is '.$db->insert_id,'inserted financial information for consumable ' . $data['consumableItemsId'] ,$SQL2);
+         $DB->insert('glpi_infocoms', [
+             'items_id' => $insertId,
+             'itemtype' => 'Consumable',
+             'buy_date' => $data['orderDate'],
+             'suppliers_id' => (int)$data['supplierId'],
+             'order_number' => strtoupper($data['orderNumber']),
+             'value' => (float)$data['unitPrice'],
+             'order_date' => $data['orderDate'],
+             'delivery_date' => $data['deliveryDate']
+         ]);
       }
    }
 }

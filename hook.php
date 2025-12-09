@@ -11,14 +11,23 @@ use Glpi\Toolbox\PluginMigration;
  */
 function plugin_stockcontrol_install()
 {
-   // Ensure the core PluginMigration class is loaded.
-   if (!class_exists(PluginMigration::class)) {
+   try {
+      include_once __DIR__ . '/inc/migration.class.php';
+      $migration = new PluginStockcontrolMigration(true);
+      
+      // Execute migration steps
+      $steps = PluginStockcontrolMigration::getMigrationSteps();
+      foreach ($steps as $version => $method) {
+          if (method_exists($migration, $method)) {
+              $migration->$method();
+          }
+      }
+      
+      return true;
+   } catch (Exception $e) {
+      error_log("Stockcontrol install error: " . $e->getMessage());
       return false;
    }
-
-   include_once __DIR__ . '/inc/migration.class.php';
-   PluginMigration::makeMigration('stockcontrol', PluginStockcontrolMigration::class);
-   return true;
 }
 
 /**
@@ -28,11 +37,13 @@ function plugin_stockcontrol_install()
  */
 function plugin_stockcontrol_uninstall()
 {
+   // Ensure the class is loaded by the autoloader before we include a file that extends it.
+   if (!class_exists(PluginMigration::class)) {
+      return false;
+   }
    include_once __DIR__ . '/inc/migration.class.php';
-
-   $migration = new PluginStockcontrolMigration(false); // Pass false to skip parent constructor
+   $migration = new PluginStockcontrolMigration();
    $migration->uninstall();
-
    return true;
 }
 
