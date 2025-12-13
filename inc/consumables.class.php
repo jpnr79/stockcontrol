@@ -149,9 +149,8 @@ class PluginStockcontrolConsumables extends \CommonDBTM {
                 $this->consumables[$consumable['consumablesId']]['chargeOut'] = round($consumable['value'] * (1 + ($this->markupPercent/100)), 2);
                 $this->consumables[$consumable['consumablesId']]['profit'] = $this->consumables[$consumable['consumablesId']]['chargeOut'] - $consumable['value'];
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             die($e);
-            return false;
         }
         
         return $this->consumables;
@@ -285,9 +284,8 @@ class PluginStockcontrolConsumables extends \CommonDBTM {
                }
                $retVal .= ">" . htmlentities($consumable['name']) . "</option>";
            }
-       } catch (Exception $e) {
+       } catch (\Exception $e) {
            die($e);
-           return false;
        }
        return $retVal . "</select>";
    }
@@ -310,9 +308,8 @@ class PluginStockcontrolConsumables extends \CommonDBTM {
            foreach ($result as $consumable) {
                $retval .= "<option value=\"" . htmlspecialchars($consumable['id']) . "\">" . htmlentities($consumable['name']) . "</option>";
            }
-       } catch (Exception $e) {
+       } catch (\Exception $e) {
            die($e);
-           return false;
        }
        return $retval . "</select>";
    }
