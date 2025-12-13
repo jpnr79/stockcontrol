@@ -68,7 +68,7 @@ class PluginStockcontrolConsumables extends \CommonDBTM {
         $result = $DB->request([
             'SELECT' => [
                 'glpi_consumableitemtypes.name' => 'consumableitemtypesName',
-                'glpi_consumableitemtypes.id' => 'itemTypeId',
+                new \QueryExpression('glpi_consumableitemtypes.id AS itemTypeId'),
                 'glpi_consumableitems.name' => 'consumableitemsName',
                 'glpi_consumableitems.alarm_threshold',
                 new \QueryExpression('count(*) as currentStock'),

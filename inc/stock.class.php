@@ -13,7 +13,7 @@ use \Request;
 
 class PluginStockcontrolStock extends \CommonDBTM {
 
-    public function getTabNameForItem(\CommonGLPI $item, int $withtemplate = 0): array|string {
+    public static function getTabNameForItem(\CommonGLPI $item, int $withtemplate = 0): array|string {
         return self::createTabEntry(__('Stock Control', 'stockcontrol'));
     }
 

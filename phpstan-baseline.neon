@@ -1,0 +1,7 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Static call to instance method CommonGLPI\:\:getTabNameForItem\(\)\.$#'
+			identifier: method.staticCall
+			count: 1
+			path: inc/menu.class.php

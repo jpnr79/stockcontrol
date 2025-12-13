@@ -8,7 +8,7 @@ if (!$plugin->isInstalled('stockcontrol') || !$plugin->isActivated('stockcontrol
 }
 
 //check for ACLs
-if (PluginStockControlStock::canView()) {
+if (PluginStockcontrolStock::canView()) {
    //View is granted: display the list.
 
    //Add page header
