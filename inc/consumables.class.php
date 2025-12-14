@@ -12,7 +12,7 @@ use \Request;
 
 
 
-class PluginStockcontrolConsumables extends \CommonDBTM {
+class PluginStockcontrolConsumables extends CommonDBTM {
     private $fromDate;
     private $toDate;
     private array $consumables = [];
